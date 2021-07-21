@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: eureka-server
+server:
+  port: 8302
+eureka:
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+    service-url:
+      defaultZone: http://eureka-server:8302/eureka
+zuul:
+  prefix: /api
+  routes:
+    order-service:
+      path: /order/**
+      url: http://order:8083
+    product-service:
+      path: /product/**
+      url: http://product:8081
+    supplier-service:
+      path: /supplier/**
+      url: http://supplier:8082
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 9000
