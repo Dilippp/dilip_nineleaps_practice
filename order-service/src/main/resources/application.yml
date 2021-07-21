@@ -1,0 +1,35 @@
+kafka:
+  topic:
+    name: MyTopic-Kafka
+  server: #public ip address of AWS EC2 instances
+    url: kafka:9092 #13.232.137.239:9092,35.154.165.93:9094,15.206.122.103:9093
+server:
+  port: 8083
+eureka:
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://eureka-server:8302/eureka/
+  instance:
+    hostname: eureka-server
+spring:
+  application:
+    name: order-service
+  data:
+    cassandra:  #public ip address of AWS EC2 instances
+      contact-points: cassandra #13.234.226.193,52.66.202.245,13.127.144.99
+      keyspace-name: nineleaps
+      port: 9042
+      schema-action: CREATE_IF_NOT_EXISTS
+swagger:
+  base:
+    package:
+      scan: com.nineleaps.orderservice.controller
+logging:
+  file:
+    max-history: 10
+    max-size: 1MB
+    name: /home/nineleaps/Documents/nineleaps-logging/order/order.log
+  pattern:
+    rolling-file-name: ${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz

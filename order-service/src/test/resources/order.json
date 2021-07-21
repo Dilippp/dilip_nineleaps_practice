@@ -1,0 +1,12 @@
+{
+  "orderId": "e26f11fd-a3b9-4eb4-b8e8-3cb73da61f24",
+  "customerId": 123,
+  "customerName": "Dilip Chauhan",
+  "products": [
+    {
+      "productId": "9623556a-6d87-4db7-a8f7-01fe57c866df",
+      "quantity": 34
+    }
+  ],
+  "shippingAddress": "cisco"
+}

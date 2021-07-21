@@ -1,0 +1,220 @@
+﻿Kafka
+Kafka concepts:
+1. Producers: Publishes records to the topics in the Kafka
+2. Consumers: Pulls records stored in the Kafka topics.
+3. Streams: Client library for processing data stored in Kafka.
+4. Connectors: A framework to build connectors for in/out movement of data between Kafka and other systems.
+
+
+Apache Kafka Terminology:
+1. Producer: An application that sends messages to Kafka
+2. Consumer: An application that receives data from Kafka
+3. Broker: Kafka server
+4. Cluster: A group of computers.
+5. Topic: A name for a Kafka stream
+6. Partition: Part of a topic
+7. Offset: Unique id for a message within a partition.
+8. Consumer Groups: A group of consumers acting as a single logical unit. 
+
+
+Creating AWS Amazon Linux EC2 instances and Kafka configurations:
+
+
+1. Install openjdk 1.8 in each machine
+sudo yum install java-1.8.0-openjdk -y
+2. Remove existing openjdk 1.7
+sudo yum remove java-1.7.0-openjdk
+3. Download Kafka from official website
+wget http://apachemirror.wuchna.com/kafka/2.5.0/kafka_2.12-2.5.0.tgz
+4. Extract: tar -xzf kafka_2.12-2.5.0.tgz
+5. Move to a folder: mv kafka_2.12-2.5.0 kafka
+6. cd kafka
+7. Start Zookeeper: bin/zookeeper-server-start.sh config/zookeeper.properties
+8. Start Kafka server: bin/kafka-server-start.sh config/server.properties
+9. Create a topic: Let's create a topic named "test" with a single partition and only one replica:
+bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic test
+10. Shows the number of topics in the node/server:
+bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+Alternatively, instead of manually creating topics you can also configure your brokers to auto-create topics when a non-existent topic is published to.      
+11.  Send some message:
+12. Run the producer and then type a few messages into the console to send to the server.
+bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic test
+13. Start a consumer for read message from topic:
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning
+14. To locate a message in the cluster: 
+topic name -> partition -> offset
+
+
+Create Kafka Cluster
+
+
+1. What is the replication factor?
+-> Total number of the copies.
+RF is defined for the topic
+
+
+2. Let's expand our cluster to three nodes (still all on our local machine).
+First we make a config file for each of the brokers (on Windows use the copy command instead):
+i. cp config/server.properties config/server-1.properties
+ii. cp config/server.properties config/server-2.properties  
+3. Now edit these new files and set the following properties:
+config/server-1.properties:
+    broker.id=1
+    listeners=PLAINTEXT://:9093
+    log.dirs=/tmp/kafka-logs-1
+
+
+    config/server-2.properties:
+
+
+            broker.id=2
+            listeners=PLAINTEXT://:9094
+            log.dirs=/tmp/kafka-logs-2
+
+
+NOTE: The broker.id property is the unique and permanent name of each node in the cluster. We have to override the port and log directory only because we are running these all on the same machine and we want to keep the brokers from all trying to register on the same port or overwrite each other's data.
+
+
+4. We already have Zookeeper and our single node started, so we just need to start the two new nodes:
+
+
+bin/kafka-server-start.sh config/server-1.properties
+
+
+bin/kafka-server-start.sh config/server-2.properties
+
+
+5. Now create a new topic with a replication factor of three:
+
+
+bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 3 --partitions 1 --topic my-replicated-topic
+
+
+6. Okay but now that we have a cluster how can we know which broker is doing what? To see that run the "describe topics" command:
+bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic my-replicated-topic
+Topic:my-replicated-topic PartitionCount:1 ReplicationFactor:3 Configs:
+Topic: my-replicated-topic Partition:0 Leader:1 Replicas: 1,2,0 Isr: 1,2,0
+
+
+Here is an explanation of the output. The first line gives a summary of all the partitions, each additional line gives information about one partition. Since we have only one partition for this topic there is only one line.
+* "leader" is the node responsible for all reads and writes for the given partition. Each node will be the leader for a randomly selected portion of the partitions.
+* "replicas" is the list of nodes that replicate the log for this partition regardless of whether they are the leader or even if they are currently alive.
+* Leader:1 -> Leader node randomly selected by kafka broker of Replicas: 1,2,0
+* "isr" is the set of "in-sync" replicas. This is the subset of the replicas list that is currently alive and caught-up to the leader.
+* Isr: 1,2,0 means all are in sync
+Note that in my example node 1 is the leader for the only partition of the topic.
+7. Let's publish a few messages to our new topic:
+bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic my-replicated-topic
+my test message 1
+my test message 2
+
+
+8. Now let's consume these messages:
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic my-replicated-topic
+my test message 1
+my test message 2
+
+
+9. Now let's test out fault-tolerance. Broker 1 was acting as the leader so let's kill it:
+> ps aux | grep server-1.properties
+7564 ttys002        0:15.91 /System/Library/Frameworks/JavaVM.framework/Versions/1.8/Home/bin/java...
+> kill -9 7564
+
+
+10. Leadership has switched to one of the followers and node 1 is no longer in the in-sync replica set:
+
+
+bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic my-replicated-topic
+Topic:my-replicated-topic   PartitionCount:1        ReplicationFactor:3 Configs:
+Topic:my-replicated-topic  Partition:0        Leader:2   Replicas: 1,2,0 Isr:2,0
+
+
+Topic:my-replicated-topic  Partition:1---if more PartitionCount:2---------
+
+
+
+
+NOTE: But the messages are still available for consumption even though the leader that took the writes originally is down:
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic my-replicated-topic
+
+
+my test message 1
+my test message 2
+
+
+
+
+Most important configurations in kafka:
+        
+1. broker.id
+2. port
+3. log.dirs
+4. zookeeper.connect
+5. delete.topic.enable
+6. auto.create.topics.enable
+7. default.replication.factor 
+8. num.partitions 
+9. log.retention.ms 
+10. log.retention.bytes
+
+
+
+
+Kafka cluster on AWS
+
+
+
+
+Create 4 EC2 instances on AWS. 1 for zookeeper server and other 3 for kafka brokers.
+Follow installation steps above for java and kafka. Download kafka in each machine. For zookeeper no need to install anything extra. Zookeeper comes in kafka.
+
+
+1. Zookeeper Server Configuration
+
+
+ Only zookeeper.properties changes:
+
+
+1. dataDir=/home/nineleaps/Music/zookeeper
+
+
+Note: in zookeeper server machine no need do any other config
+Start zookeeper server as above step.
+
+
+2. Broker Configuration
+
+
+Only server.properties changes:
+
+
+1. broker.id=0,1,2 etc
+2. broker.rack=RACK1 (for one node rack should be RACK2)
+3. log.dirs=/home/nineleaps/Music/kafka_data
+
+
+4. offsets.topic.num.partitions=3
+5. offsets.topic.replication.factor=2
+
+
+6. min.insync.replicas=2
+7. default.replication.factor=2
+8. zookeeper.connect: 172.31.39.23 (private ip of zookeeper aws instance, do ip addr to get ip)
+
+
+3. To check all broker register with cluster:
+
+
+bin/zookeeper-shell.sh 172.31.39.23:2181 ls /brokers/ids
+
+
+
+
+Result:
+
+
+[root@ip-172-31-32-126 kafka]# bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic dilip_test
+Topic: dilip_test        PartitionCount: 2        ReplicationFactor: 2        Configs: min.insync.replicas=2,segment.bytes=1073741824
+        Topic: dilip_test        Partition: 0        Leader: 1        Replicas: 1,2        Isr: 1,2
+        Topic: dilip_test        Partition: 1        Leader: 0        Replicas: 0,2        Isr: 0,2
+[root@ip-172-31-32-126 kafka]#

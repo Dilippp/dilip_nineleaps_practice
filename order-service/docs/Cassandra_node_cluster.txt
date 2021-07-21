@@ -1,0 +1,62 @@
+﻿1. Create 3 AWS EC2 instances of ubuntu (use at least medium instance type).
+2. Do ssh to each instance.
+3. Install java in each instance. Follow the below steps
+
+
+sudo add-apt-repository ppa:openjdk-r/ppa 
+sudo apt-get update
+         sudo apt-get install openjdk-8-jre
+4. Check java version: java -version
+5. Java got installed here: /usr/lib/jvm/java-8-openjdk-amd64
+6. Set JAVA_HOME
+7. Edit file: sudo vim ~/.bashrc
+8. Set at the end of file: JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+9. Install curl: sudo apt install curl
+10. Install cassandra:
+echo "deb https://downloads.apache.org/cassandra/debian 311x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+curl https://downloads.apache.org/cassandra/KEYS | sudo apt-key add -
+
+
+sudo apt-get update
+sudo apt-get install cassandra
+
+
+11. To run: sudo service cassandra start
+12. To stop: sudo service cassandra stop
+13. To check running status: sudo service cassandra status
+14. Running status: nodetool status
+
+
+* You can start Cassandra with sudo service cassandra start and stop it with sudo service cassandra stop. However, normally the service will start automatically. For this reason be sure to stop it if you need to make any configuration changes.
+* Verify that Cassandra is running by invoking nodetool status from the command line.
+* The default location of configuration files is /etc/cassandra.
+* The default location of log and data directories is /var/log/cassandra/ and /var/lib/cassandra.
+* Start-up options (heap size, etc) can be configured in /etc/default/cassandra.
+
+
+
+
+
+
+Create and Configure Cassandra Cluster:
+Points: 
+Normally you will get cassandra.yml file here: cd /etc/cassandra
+1. Cluster names should be the same across all the nodes.
+E.g: cluster_name=’Test Cluster’
+2. Take two IPs as seed nodes.
+-> All nodes's cassandra.yml file should contain the same IPs as seed nodes.
+            E.g: -seeds: 133.168.113.130, 133.168.113.131
+         -> In all the cassandra.yml files
+3. rpc_address: 133.168.113.130
+ -> This would be the IP address of that particular machine.
+4. listen_address: 133.168.113.130
+ -> This would be the IP address of that particular machine.
+5. At the end of the file (cassandra.yml)
+1. auto_bootstrap: false
+-> For the seed nodes.
+
+
+2. auto_bootstrap: true
+     -> For the non-seed nodes.
+  6. In cassandra clustered, we have to start all the seed nodes first.
+  7. Start a non seed node.

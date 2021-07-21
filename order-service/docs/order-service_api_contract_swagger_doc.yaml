@@ -1,0 +1,196 @@
+swagger: '2.0'
+info:
+  description: Order's API for UI developers
+  version: '1.0'
+  title: Swagger documentation for Order API
+  termsOfService: Terms of Service
+  contact:
+    name: Order Service
+    url: 'https://www.nineleaps.com'
+    email: dilip.chauhan@nineleaps.com
+  license:
+    name: Apache License Version 2.0
+    url: 'https://www.apache.org/licesen.html'
+host: '172.19.0.2:8302'
+basePath: /api/order
+tags:
+  - name: order-controller
+    description: Order Controller
+paths:
+  /rest/v1/orders:
+    post:
+      tags:
+        - order-controller
+      summary: Use this API to place order
+      operationId: placeOrderUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: order
+          description: order
+          required: true
+          schema:
+            $ref: '#/definitions/Order'
+      responses:
+        '201':
+          description: Successfully record created
+          schema:
+            $ref: '#/definitions/Order'
+        '400':
+          description: 'Bad request, missing some fields in the entity'
+        '401':
+          description: You are not authorized to view the resource
+        '403':
+          description: Accessing the resource you were trying to reach is forbidden
+        '422':
+          description: Entity may have field validation errors
+        '500':
+          description: Something went wrong at server side while processing the request
+      deprecated: false
+    put:
+      tags:
+        - order-controller
+      summary: Update order record
+      operationId: updateOrderUsingPUT
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: order
+          description: order
+          required: true
+          schema:
+            $ref: '#/definitions/Order'
+      responses:
+        '200':
+          description: Processed successfully
+          schema:
+            $ref: '#/definitions/Order'
+        '400':
+          description: 'Bad request, missing some fields in the entity'
+        '401':
+          description: You are not authorized to view the resource
+        '403':
+          description: Accessing the resource you were trying to reach is forbidden
+        '404':
+          description: Resource not found in the system
+        '422':
+          description: Entity may have field validation errors
+        '500':
+          description: Something went wrong at server side while processing the request
+      deprecated: false
+  '/rest/v1/orders/customer/{customerId}':
+    get:
+      tags:
+        - order-controller
+      summary: Get order from the system
+      operationId: getOrderByCustomerIdUsingGET
+      produces:
+        - '*/*'
+      parameters:
+        - name: customerId
+          in: path
+          description: customerId
+          required: true
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: Processed successfully
+          schema:
+            $ref: '#/definitions/Order'
+        '401':
+          description: You are not authorized to view the resource
+        '403':
+          description: Accessing the resource you were trying to reach is forbidden
+        '404':
+          description: Resource not found in the system
+        '500':
+          description: Something went wrong at server side while processing the request
+      deprecated: false
+  '/rest/v1/orders/{orderId}':
+    get:
+      tags:
+        - order-controller
+      summary: Get order from the system
+      operationId: getOrderByIdUsingGET
+      produces:
+        - '*/*'
+      parameters:
+        - name: orderId
+          in: path
+          description: orderId
+          required: true
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Processed successfully
+          schema:
+            $ref: '#/definitions/Order'
+        '401':
+          description: You are not authorized to view the resource
+        '403':
+          description: Accessing the resource you were trying to reach is forbidden
+        '404':
+          description: Resource not found in the system
+        '500':
+          description: Something went wrong at server side while processing the request
+      deprecated: false
+    delete:
+      tags:
+        - order-controller
+      summary: Delete order from the system
+      operationId: deleteOrderUsingDELETE
+      produces:
+        - '*/*'
+      parameters:
+        - name: orderId
+          in: path
+          description: orderId
+          required: true
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Deleted record successfully
+        '401':
+          description: You are not authorized to view the resource
+        '403':
+          description: Accessing the resource you were trying to reach is forbidden
+        '404':
+          description: Resource not found in the system
+        '500':
+          description: Something went wrong at server side while processing the request
+      deprecated: false
+definitions:
+  Order:
+    type: object
+    properties:
+      customerId:
+        type: integer
+        format: int32
+      customerName:
+        type: string
+      products:
+        type: array
+        items:
+          $ref: '#/definitions/Product'
+      shippingAddress:
+        type: string
+    title: Order
+  Product:
+    type: object
+    properties:
+      productId:
+        type: string
+        format: uuid
+      quantity:
+        type: integer
+        format: int32
+    title: Product

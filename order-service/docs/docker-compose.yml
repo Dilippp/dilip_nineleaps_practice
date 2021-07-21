@@ -1,0 +1,87 @@
+version: '2'
+services:
+  cassandra:
+    image: cassandra
+    container_name: cassandra
+    restart: always
+    volumes:
+      - ./db/casdata:/var/lib/cassandra
+    ports:
+      - 9042:9042
+    networks:
+      - nineleaps
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - nineleaps
+    restart: always
+  kafka:
+    build:
+        context: ./kafka
+        dockerfile: Dockerfile
+    ports:
+      - "9092:9092"
+    networks:
+      - nineleaps
+    restart: always
+    container_name: kafka
+    environment:
+      DOCKER_API_VERSION: 1.22
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "MyTopic-Kafka:1:1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  service-registry:
+    image: service_registry
+    networks:
+      - nineleaps
+    restart: on-failure
+    ports:
+      - 8303:8302/tcp
+    container_name: eureka-server
+  hystrix-dashboard:
+    image: hystrix-dashboard
+    networks:
+      - nineleaps
+    restart: on-failure
+    ports:
+      - 8085:8085/tcp
+    container_name: hystrix-dashboard
+  product:
+    image: product
+    depends_on:
+      - cassandra
+    networks:
+      - nineleaps
+    restart: on-failure
+    ports:
+      - 8091:8081/tcp
+    container_name: product
+  order:
+    image: order
+    depends_on:
+      - cassandra
+    networks:
+      - nineleaps
+    restart: on-failure
+    ports:
+      - 8092:8082/tcp
+    container_name: order
+  supplier:
+    image: supplier
+    depends_on:
+      - cassandra
+    networks:
+      - nineleaps
+    restart: on-failure
+    ports:
+      - 8093:8083/tcp
+    container_name: supplier
+networks:
+  nineleaps:
+    driver: bridge
+
